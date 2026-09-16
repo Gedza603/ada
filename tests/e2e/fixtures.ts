@@ -66,9 +66,14 @@ export const test = base.extend<Fixtures>({
     await use(page);
     await context.close();
   },
+  // NOTE: baseURL ends with a trailing slash and every call site below uses
+  // a RELATIVE path with NO leading slash (e.g. request.get("habits?...")).
+  // A leading slash would resolve against the origin per WHATWG URL rules
+  // and silently drop "/rest/v1", turning every request into a 404 against
+  // the wrong route instead of the intended RLS-protected one.
   apiAsUserA: async ({ userA }, use) => {
     const ctx = await request.newContext({
-      baseURL: `${SUPABASE_URL}/rest/v1`,
+      baseURL: `${SUPABASE_URL}/rest/v1/`,
       extraHTTPHeaders: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${userA.token}` },
     });
     await use(ctx);
@@ -76,7 +81,7 @@ export const test = base.extend<Fixtures>({
   },
   apiAsUserB: async ({ userB }, use) => {
     const ctx = await request.newContext({
-      baseURL: `${SUPABASE_URL}/rest/v1`,
+      baseURL: `${SUPABASE_URL}/rest/v1/`,
       extraHTTPHeaders: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${userB.token}` },
     });
     await use(ctx);
@@ -84,7 +89,7 @@ export const test = base.extend<Fixtures>({
   },
   anonApi: async ({}, use) => {
     const ctx = await request.newContext({
-      baseURL: `${SUPABASE_URL}/rest/v1`,
+      baseURL: `${SUPABASE_URL}/rest/v1/`,
       extraHTTPHeaders: { apikey: SUPABASE_ANON_KEY },
     });
     await use(ctx);

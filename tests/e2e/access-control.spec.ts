@@ -34,7 +34,7 @@ test.describe("signed-out access control", () => {
   });
 
   test("PostgREST rejects an anonymous read of habits", async ({ anonApi }) => {
-    const response = await anonApi.get("/habits?select=*");
+    const response = await anonApi.get("habits?select=*");
     if (response.status() === 200) {
       expect(await response.json()).toEqual([]);
     } else {
@@ -43,7 +43,7 @@ test.describe("signed-out access control", () => {
   });
 
   test("PostgREST rejects an anonymous read of habit_completions", async ({ anonApi }) => {
-    const response = await anonApi.get("/habit_completions?select=*");
+    const response = await anonApi.get("habit_completions?select=*");
     if (response.status() === 200) {
       expect(await response.json()).toEqual([]);
     } else {
@@ -52,9 +52,9 @@ test.describe("signed-out access control", () => {
   });
 
   test("PostgREST rejects an anonymous insert into habits", async ({ anonApi }) => {
-    const response = await anonApi.post("/habits", {
+    const response = await anonApi.post("habits", {
       data: { name: "anon should not be able to create this" },
     });
-    expect(response.ok()).toBeFalsy();
+    expect(response.status()).toBe(401);
   });
 });
