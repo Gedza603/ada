@@ -70,21 +70,87 @@ no fix/re-test/re-verify/commit cycle was required for this pass.
 
 ---
 
-## Second pass (fresh context) — REQUIRED, not yet run
+## Second pass (fresh context)
 
-Per the brief's fresh-context requirement, this session must **not** run
-the second pass itself. **A new Claude Code session must independently run
-the security review** (again substituting `security-review` for
-`/security-scan`, per the same user-approved substitution above, unless a
-real `/security-scan` becomes available) against the current state of the
-repository, with no reliance on this session's context or conclusions.
+**Date:** 2026-09-16
+**Method:** A separate, freshly-spawned Claude Code session with no memory
+of the first pass (or of this file) performed the review. It read the
+codebase cold and formed its own conclusions first, and only opened this
+file afterward to learn the "Second pass" section's expected shape —
+deliberately to avoid anchoring on the first pass's clean result.
 
-**Status:** ⏳ Pending. To be filled in by the fresh-context session:
+The session attempted to invoke the `security-review` skill directly but
+hit the same substitution issue noted above (the skill's git-repo
+precondition checks against a working directory outside this repo and
+couldn't be redirected into it), so — per the same user-approved
+substitution — it applied the skill's methodology manually: the standard
+vulnerability categories, the standard exclusion list, and the same >80%
+exploitability confidence bar before reporting anything.
 
-- Date:
-- Findings:
-- Fixes applied (if any):
-- Final Critical count:
-- Final High count:
+**Scope reviewed:** `ARCHITECTURE.md`, all four `supabase/migrations/*.sql`
+files plus `supabase/config.toml`, `proxy.ts` and every
+`lib/supabase/*.ts` file, `lib/auth/*.ts`, `lib/data/*.ts`,
+`lib/validation/schemas.ts`, `lib/security/csp.ts`, every route under
+`app/(public)/`, `app/(protected)/`, and `app/auth/*`, all `components/**`,
+`next.config.ts`, `package.json`, `.env.local`/`.env.example`/`.gitignore`,
+and the full Playwright suite (`tests/e2e/*.spec.ts`, `auth.setup.ts`,
+`fixtures.ts`) checked for shipped test-only backdoors. Also confirmed via
+`git log --all -- .env.local` that no secret was ever committed.
 
-This file should be updated (not replaced) once that pass completes.
+**Result: 0 Critical, 0 High, 0 Medium, 0 Low findings.**
+
+Beyond a surface read, this pass specifically stress-tested: CSRF-ability
+of `/auth/signout` (a Route Handler, not a Server Action — verified
+`SameSite=Lax` still blocks the cross-site POST case since it doesn't get
+Next's automatic Server Action origin check); `safeRedirect()` against
+backslash/double-slash/control-char/decode bypass variants; whether a user
+can tamper with `habits`/`profiles` columns beyond what the app UI sends
+via direct PostgREST calls (possible only against their own already-owned
+rows — self-only data-integrity noise, not cross-user or privilege
+escalation, so it doesn't clear the confidence bar); and whether the
+unused browser Supabase client or `getProfile()` are reachable from any
+live data path that could bypass the server-action-only architecture
+(confirmed dead code, zero exploitable path).
+
+It independently re-confirmed: RLS enabled and forced on all three tables
+with `anon` fully revoked and no `BYPASSRLS`; every policy's
+`USING`/`WITH CHECK` correctly scoped; `habit_completions` ownership
+enforced three ways; no service-role key anywhere in the repo; no XSS
+surface; CSP nonce + `strict-dynamic` with no `unsafe-inline`/`unsafe-eval`
+in production; no shipped test-only backdoors in the e2e suite (users are
+provisioned only through the real `/signup` UI flow).
+
+Two items were called out as pre-existing, already-disclosed accepted
+risk rather than new findings: `enable_confirmations = false` (documented
+evaluation-only trade-off in `ARCHITECTURE.md`) and
+`style-src 'self' 'unsafe-inline'` in the CSP (documented, justified —
+style injection alone can't execute script or exfiltrate cookies).
+
+**Dependency check:** `npm audit` — **0 vulnerabilities** (451 total
+dependencies: 31 prod, 383 dev, 88 optional).
+
+**Fixes applied:** none — no Critical or High findings were produced, so
+the fix/re-verify cycle was not triggered.
+
+**Final Critical count: 0**
+**Final High count: 0**
+
+**Caveat (explicitly flagged by the reviewing session, not verifiable
+from static code):** two things live outside this repo and weren't and
+couldn't be checked by either pass — the hosted Supabase project's
+dashboard-configured password policy / email-confirmation setting, and a
+live token-replay/session-fixation check against the actual deployed
+production URL. Both are infra/config concerns rather than codebase
+findings.
+
+---
+
+## Outcome
+
+Two independent passes (different sessions, second with no reliance on
+the first's context or conclusions) both confirm **0 Critical / 0 High**
+findings, with a clean `npm audit` on both runs. Per the brief's
+completion criterion, the project is considered finished from a security
+standpoint, subject to the infra-level caveat above (Supabase dashboard
+auth settings; production-only session checks) being out of scope for a
+static codebase review.
