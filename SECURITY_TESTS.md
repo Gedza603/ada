@@ -89,8 +89,8 @@ PostgREST read with no bearer token returns `401`/`[]`.
 
 ## Status of this document
 
-This file describes the test suite as implemented in `tests/e2e/`. Whether
-the suite currently **passes** against the live project, and the actual run
-output, is recorded separately once a full run has been executed (see the
-project's working notes / commit history for the latest run) — this
-document is the test catalog, not a pass/fail report.
+This file describes the test suite as implemented in `tests/e2e/`. The full
+suite (all 32 tests) passed against both local dev and the live production
+deployment — see [DEPLOYMENT_VERIFICATION.md](./DEPLOYMENT_VERIFICATION.md)
+§3 for the actual run output. This document is the test catalog and
+explanation of what each test proves; that file has the pass/fail record.
