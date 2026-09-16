@@ -1,36 +1,56 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Habitly
 
-## Getting Started
+A personal habit tracker where every signed-in user has their own private
+habits and habit-completion data — enforced at the database level, not just
+in the UI.
 
-First, run the development server:
+Built with Next.js (App Router) + TypeScript, Tailwind CSS, Supabase
+(Postgres, Auth, Row Level Security), and Playwright.
+
+## Documentation
+
+- [ARCHITECTURE.md](./ARCHITECTURE.md) — application architecture, database
+  schema, authentication flow, and how RLS protects every table.
+- [SECURITY_TESTS.md](./SECURITY_TESTS.md) — the two-user authorization test
+  suite and how to run it.
+- [DEPLOYMENT_VERIFICATION.md](./DEPLOYMENT_VERIFICATION.md) — post-deploy
+  checklist and results.
+- [SECURITY_AUDIT.md](./SECURITY_AUDIT.md) — security scan results.
+
+## Getting started locally
 
 ```bash
+npm install
+cp .env.example .env.local   # fill in your Supabase project URL + anon key
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Requires a Supabase project with the migrations in `supabase/migrations/`
+applied (`supabase db push`), and **Authentication → Providers → Email →
+"Confirm email"** turned off in that project so sign-up sessions activate
+immediately (see ARCHITECTURE.md §3.2).
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Testing
 
-## Learn More
+```bash
+npx playwright test
+```
 
-To learn more about Next.js, take a look at the following resources:
+Runs the full end-to-end suite — authentication, habit CRUD, and the
+required cross-account authorization tests — against a real Next.js server
+and real Supabase project. See [SECURITY_TESTS.md](./SECURITY_TESTS.md).
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Project structure
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+See [ARCHITECTURE.md §6](./ARCHITECTURE.md#6-project-folder-structure) for
+the full annotated folder structure.
 
-## Deploy on Vercel
+## Deployment
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Deployed on [Vercel](https://vercel.com). Only
+`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, and
+`NEXT_PUBLIC_SITE_URL` are needed as environment variables — this project
+never uses the Supabase service-role key at runtime (see ARCHITECTURE.md
+§8).
